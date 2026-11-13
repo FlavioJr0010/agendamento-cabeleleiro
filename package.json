@@ -15,7 +15,9 @@
     "db:seed": "tsx --env-file=.env scripts/seed.ts",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "lembretes": "tsx --env-file=.env scripts/lembretes.ts",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "better-auth": "^1.7.22",
@@ -29,6 +31,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.0",
     "@tailwindcss/turbopack": "4.3.3",
     "@types/node": "^22.20.5",
     "@types/pg": "^8.23.1",

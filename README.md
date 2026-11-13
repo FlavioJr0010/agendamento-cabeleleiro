@@ -127,3 +127,74 @@ docker compose down -v                # parar e APAGAR os dados
 Para conectar por um cliente externo (DBeaver, TablePlus etc.): host `localhost`, porta `55432`, usuário `salao`, senha `salao_dev`, banco `agendamento`.
 
 > Os scripts em `docker/postgres/init/` rodam só na primeira criação do volume (ex.: extensão `btree_gist`, usada para impedir agendamentos sobrepostos).
+
+## Gestão do salão
+
+A dona acessa estas telas pela barra lateral do painel:
+
+- **Visão geral:** agenda do dia, horários pendentes de confirmação e entradas do caixa.
+- **Configurações:** nome, slogan, apresentação, endereço, cidade, telefone, WhatsApp, Instagram e e-mail. Ao salvar, o site atualiza os contatos e a identidade. No Instagram, informe apenas o usuário, com ou sem `@`.
+- **Clientes:** contatos, ficha interna (preferências, fórmula de coloração, alergias e observações) e histórico de agendamentos.
+- **Estoque:** produtos, saldos, estoque mínimo, validade, movimentações e ficha técnica por serviço. Quantidades são expressas em ml, g ou unidades; o custo unitário é informado em centavos. Selecione entrada ou saída e informe uma quantidade positiva para movimentar o saldo. Ao concluir um atendimento, os produtos da ficha técnica são baixados automaticamente.
+- **Financeiro:** caixa por dia, entradas e despesas manuais, comissões por profissional e edição do percentual para atendimentos futuros. Concluir o atendimento gera uma entrada e congela a comissão. Pagar a comissão exige registrar a saída correspondente no caixa.
+- **Indicadores:** período de consulta, atendimentos concluídos, receita e ticket médio de serviços, cancelamentos, faltas e saldo do caixa. A agenda é filtrada pela data do atendimento e o caixa pela data de competência do lançamento.
+
+As telas de gestão e suas ações são restritas ao papel `dona`. Profissionais continuam com acesso à própria agenda e às conversas autorizadas.
+
+**Os contatos do seed são fictícios e servem apenas para demonstração.** Antes de usar o site com clientes, substitua-os em **Painel → Configurações**. Apagar um campo de contato remove o respectivo link do site. Os dados reais não estão incluídos no repositório.
+
+## Lista de espera
+
+Na etapa de escolha do horário, selecione serviço, profissional e dia e use **Avise-me se abrir vaga**. É necessário entrar na conta. Escolha manhã, tarde ou qualquer período; pedidos idênticos pendentes não são duplicados.
+
+Quando um cancelamento, remarcação ou remoção de bloqueio libera horário compatível, o sistema adiciona um aviso à fila de e-mails. O aviso não reserva o horário: a cliente precisa voltar ao site e confirmar o agendamento. A entrega depende do worker descrito abaixo.
+
+## Envio dos lembretes
+
+A confirmação pela equipe agenda um lembrete para 24 horas antes do atendimento (ou imediatamente, se já faltar menos de 24h). Remarcar atualiza também o texto do lembrete; cancelar ou concluir remove lembretes pendentes.
+
+Configure no `.env`:
+
+```dotenv
+RESEND_API_KEY=sua-chave
+LEMBRETES_REMETENTE=Nome do Salão <agenda@seu-dominio.com.br>
+```
+
+O remetente deve pertencer a um domínio verificado no [Resend](https://resend.com/docs/api-reference/emails/send-email). Para consultar a fila sem enviar mensagens nem alterar registros:
+
+```bash
+npm run lembretes -- --simular
+```
+
+Para enviar até 100 notificações vencidas por execução:
+
+```bash
+npm run lembretes
+```
+
+Agende esse comando no cron ou no agendador da hospedagem, por exemplo a cada cinco minutos, executando no diretório do projeto. O comando não cria um serviço permanente. Sem as credenciais, ele encerra com erro e preserva a fila.
+
+Cada mensagem é bloqueada durante o processamento (`SKIP LOCKED`), permitindo workers concorrentes. O envio usa [chave de idempotência do Resend](https://resend.com/docs/dashboard/emails/idempotency-keys), válida por 24h; não há garantia de entrega exatamente uma vez se o processo falhar após o provedor aceitar e a nova tentativa ocorrer depois desse prazo. Falhas ficam em `notificacoes.erro`, sem preencher `enviado_em`, para nova tentativa. Lembretes de atendimentos passados ou fora dos status pendente/confirmado são descartados. Contatos sem e-mail real e notificações WhatsApp ficam com erro: o transporte implementado é e-mail.
+
+## Verificação e testes no navegador
+
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
+O build baixa as fontes do Google. Em ambientes onde o Turbopack não consegue criar seus processos auxiliares, use `npm run build -- --webpack`.
+
+O teste de ponta a ponta usa Playwright e Chrome, com banco migrado, catálogo e conta da dona criados pelo seed e app já rodando em `http://localhost:3000`:
+
+```bash
+npm run dev
+# em outro terminal
+npm run test:e2e
+```
+
+Por padrão, o executável é `/usr/bin/google-chrome`; use `CHROME_PATH` para outro caminho e `E2E_BASE_URL` para outro endereço. O login administrativo usa `SEED_DONA_EMAIL` e `SEED_DONA_SENHA` do `.env`.
+
+**Execute em ambiente de desenvolvimento/teste:** o teste cria uma cliente e registros temporários, altera brevemente o nome do salão e restaura os dados ao concluir. Cobre página inicial e menu móvel, permissões, cadastro, reserva e cancelamento, lista de espera sem duplicação e geração do aviso de vaga, troca de mensagens, configurações, ficha da cliente, estoque, consumo ao concluir, caixa, indicadores e processamento da fila com transporte simulado. Não envia e-mails reais. Capturas e traces de falhas ficam em `test-results/` (ignorado pelo Git).

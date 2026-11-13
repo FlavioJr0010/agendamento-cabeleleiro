@@ -38,14 +38,14 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/painel/men
 
   return (
     <>
-      <nav aria-label="Filtrar conversas" className="mb-5 flex flex-wrap gap-2">
+      <nav aria-label="Filtrar conversas" className="mb-5 inline-flex max-w-full flex-wrap gap-1 rounded-2xl border border-border bg-card p-1">
         {FILTROS.map((f) => (
           <Link
             key={f.valor}
             href={`/painel/mensagens?status=${f.valor}`}
             aria-current={filtro === f.valor ? "page" : undefined}
-            className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
-              filtro === f.valor ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card hover:bg-surface"
+            className={`rounded-xl px-3.5 py-1.5 text-sm font-medium transition-colors ${
+              filtro === f.valor ? "bg-primary text-primary-foreground shadow-sm" : "text-muted hover:bg-surface hover:text-foreground"
             }`}
           >
             {f.rotulo}

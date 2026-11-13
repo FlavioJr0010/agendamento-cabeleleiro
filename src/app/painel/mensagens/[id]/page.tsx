@@ -5,7 +5,7 @@ import { Suspense } from "react";
 import { z } from "zod";
 import { Conversa } from "@/components/conversa/conversa";
 import { FormAcao } from "@/components/form-acao";
-import { Botao, CabecalhoPagina, Esqueleto } from "@/components/ui";
+import { Botao, CabecalhoPagina, classeBotao, Esqueleto } from "@/components/ui";
 import { obterThread } from "@/db/consultas/mensagens";
 import { alterarStatusConversa } from "@/lib/mensagens-actions";
 import { linkWhatsapp } from "@/lib/salao";
@@ -43,17 +43,17 @@ async function Conteudo({ params }: { params: PageProps<"/painel/mensagens/[id]"
                 href={whatsapp}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex h-9 items-center gap-2 rounded-full border border-border bg-card px-4 text-sm font-medium hover:bg-surface"
+                className={classeBotao("secundario", "pequeno")}
               >
-                <MessageCircle className="size-4" aria-hidden /> WhatsApp
+                <MessageCircle aria-hidden /> WhatsApp
               </a>
             )}
             {thread.clienteTelefone && (
               <a
                 href={`tel:${thread.clienteTelefone.replace(/\D/g, "")}`}
-                className="inline-flex h-9 items-center gap-2 rounded-full border border-border bg-card px-4 text-sm font-medium hover:bg-surface"
+                className={classeBotao("secundario", "pequeno")}
               >
-                <Phone className="size-4" aria-hidden /> Ligar
+                <Phone aria-hidden /> Ligar
               </a>
             )}
             <FormAcao action={alterarStatusConversa.bind(null, thread.id, encerrada ? "aberta" : "encerrada")} silencioso>

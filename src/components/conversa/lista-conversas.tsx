@@ -14,11 +14,11 @@ const STATUS = {
 
 export function ListaConversas({ itens, base, mostrarCliente }: { itens: Item[]; base: string; mostrarCliente?: boolean }) {
   if (itens.length === 0) {
-    return <Vazio icone={<MessagesSquare className="size-6" />} titulo="Nenhuma conversa por aqui" />;
+    return <Vazio icone={<MessagesSquare />} titulo="Nenhuma conversa por aqui" texto="Quando houver mensagens, elas aparecem nesta lista." />;
   }
   const hoje = hojeNoSalao();
   return (
-    <ul className="divide-y divide-border overflow-hidden rounded-3xl border border-border bg-card">
+    <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.03)]">
       {itens.map((t) => {
         const dia = dataLocal(t.ultimaMensagemEm);
         const quando = dia === hoje ? horaLocal(t.ultimaMensagemEm) : `${partesDia(dia).dia}/${dia.slice(5, 7)}`;

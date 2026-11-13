@@ -12,7 +12,7 @@ type Thread = NonNullable<Awaited<ReturnType<typeof obterThread>>>;
 export function Conversa({ thread, usuarioId, visaoEquipe }: { thread: Thread; usuarioId: string; visaoEquipe: boolean }) {
   const dias = thread.mensagens.map((m) => dataLocal(m.createdAt));
   return (
-    <div className="flex min-h-[60dvh] flex-col overflow-hidden rounded-3xl border border-border bg-card">
+    <div className="flex min-h-[60dvh] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.03)]">
       {thread.agendamentoId && thread.agendamentoInicio && (
         <div className="flex items-center gap-3 border-b border-border bg-surface/60 px-5 py-3 text-sm">
           <CalendarDays className="size-4 shrink-0 text-primary" aria-hidden />

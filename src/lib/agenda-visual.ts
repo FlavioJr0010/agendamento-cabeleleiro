@@ -3,10 +3,10 @@ import { hojeNoSalao, horaLocal, horaParaMinutos } from "./fuso";
 
 export const STATUS_AGENDAMENTO = {
   pendente: { rotulo: "Pendente", cor: "border-l-amber-500 bg-amber-50 dark:bg-amber-950/40", tom: "alerta" },
-  confirmado: { rotulo: "Confirmado", cor: "border-l-primary bg-primary-soft", tom: "sucesso" },
-  em_atendimento: { rotulo: "Em atendimento", cor: "border-l-violet-500 bg-violet-50 dark:bg-violet-950/40", tom: "sucesso" },
+  confirmado: { rotulo: "Confirmado", cor: "border-l-primary bg-primary-soft", tom: "primario" },
+  em_atendimento: { rotulo: "Em atendimento", cor: "border-l-violet-500 bg-violet-50 dark:bg-violet-950/40", tom: "info" },
   concluido: { rotulo: "Concluído", cor: "border-l-emerald-600 bg-emerald-50 dark:bg-emerald-950/40", tom: "sucesso" },
-  faltou: { rotulo: "Não compareceu", cor: "border-l-zinc-400 bg-surface opacity-70", tom: "neutro" },
+  faltou: { rotulo: "Não compareceu", cor: "border-l-zinc-400 bg-surface opacity-70", tom: "perigo" },
   cancelado: { rotulo: "Cancelado", cor: "border-l-zinc-400 bg-surface opacity-60", tom: "neutro" },
 } as const;
 

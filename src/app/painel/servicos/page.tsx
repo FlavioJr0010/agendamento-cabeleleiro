@@ -1,8 +1,9 @@
+import { ChevronRight, Plus, Scissors } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { FormAcao } from "@/components/form-acao";
-import { Botao, Esqueleto, Secao, Selo } from "@/components/ui";
+import { Botao, CabecalhoPagina, EsqueletoPainel, Expansivel, Secao, Selo, Tabela, Vazio } from "@/components/ui";
 import { listarServicos } from "@/db/consultas/painel";
 import { formatarDuracao, formatarPreco } from "@/lib/formato";
 import { exigirSessao } from "@/lib/sessao";
@@ -13,64 +14,72 @@ export const metadata: Metadata = { title: "Serviços" };
 
 export default function PaginaServicos() {
   return (
-    <Suspense fallback={<Esqueleto linhas={5} />}>
-      <Conteudo />
-    </Suspense>
+    <>
+      <CabecalhoPagina titulo="Serviços" descricao="Catálogo exibido no site, com preço, duração e quem realiza cada serviço." />
+      <Suspense fallback={<EsqueletoPainel />}>
+        <Conteudo />
+      </Suspense>
+    </>
   );
 }
 
 async function Conteudo() {
   await exigirSessao(["dona"]);
   const lista = await listarServicos();
+  const ativos = lista.filter((s) => s.ativo).length;
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-semibold tracking-tight">Serviços</h1>
-
-      <Secao titulo="Novo serviço" descricao="Depois de cadastrar, vincule o serviço às profissionais que o realizam.">
+      <Expansivel
+        icone={<Plus />}
+        titulo="Novo serviço"
+        descricao="Depois de cadastrar, vincule o serviço às profissionais que o realizam."
+        aberto={lista.length === 0}
+      >
         <FormAcao action={criarServico} limparAoConcluir className="flex flex-col gap-4">
           <CamposServico prefixo="novo-" />
-          <div>
+          <div className="flex justify-end border-t border-border pt-4">
             <Botao type="submit">Cadastrar serviço</Botao>
           </div>
         </FormAcao>
-      </Secao>
+      </Expansivel>
 
-      <Secao titulo={`Cadastrados (${lista.length})`}>
+      <Secao titulo="Catálogo" descricao={`${ativos} ativo${ativos === 1 ? "" : "s"} de ${lista.length}`} semEspaco>
         {lista.length === 0 ? (
-          <p className="text-sm text-muted">Nenhum serviço cadastrado ainda.</p>
+          <Vazio compacto icone={<Scissors />} titulo="Nenhum serviço cadastrado" texto="Cadastre o primeiro serviço no formulário acima." />
         ) : (
-          <ul className="-mx-2 flex flex-col">
+          <Tabela rotulo="Serviços" colunas={["Serviço", "Duração", "Preço", "Profissionais", <span key="a" className="sr-only">Abrir</span>]}>
             {lista.map((s) => (
-              <li key={s.id}>
-                <Link
-                  href={`/painel/servicos/${s.id}`}
-                  className={`flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg px-2 py-3 hover:bg-border/40 ${
-                    s.ativo ? "" : "opacity-60"
-                  }`}
-                >
-                  <span className="min-w-0 flex-1 font-medium">{s.nome}</span>
-                  <span className="text-sm text-muted tabular-nums sm:w-32 sm:text-right">
-                    {formatarDuracao(s.duracaoMin)}
-                    {s.intervaloMin > 0 && ` + ${s.intervaloMin} min`}
-                  </span>
-                  <span className="w-24 text-right text-sm font-medium tabular-nums">{formatarPreco(s.precoCentavos)}</span>
-                  <span className="flex w-full gap-2 sm:w-32 sm:justify-end">
-                    {!s.ativo && <Selo>Inativo</Selo>}
-                    {s.ativo && s.qtdProfissionais === 0 ? (
-                      <Selo tom="alerta">Sem profissional</Selo>
-                    ) : (
-                      s.ativo && (
-                        <Selo tom="sucesso">
-                          {s.qtdProfissionais} profissional{s.qtdProfissionais > 1 ? "is" : ""}
-                        </Selo>
-                      )
-                    )}
-                  </span>
-                </Link>
-              </li>
+              <tr key={s.id} className={`group relative transition-colors hover:bg-surface/60 ${s.ativo ? "" : "text-muted"}`}>
+                <td>
+                  <Link href={`/painel/servicos/${s.id}`} className="font-medium after:absolute after:inset-0">
+                    {s.nome}
+                  </Link>
+                </td>
+                <td className="text-muted tabular-nums">
+                  {formatarDuracao(s.duracaoMin)}
+                  {s.intervaloMin > 0 && <span className="text-xs"> + {s.intervaloMin} min de intervalo</span>}
+                </td>
+                <td className="font-medium tabular-nums">{formatarPreco(s.precoCentavos)}</td>
+                <td>
+                  {!s.ativo ? (
+                    <Selo>Inativo</Selo>
+                  ) : s.qtdProfissionais === 0 ? (
+                    <Selo tom="alerta" ponto>
+                      Sem profissional
+                    </Selo>
+                  ) : (
+                    <Selo tom="sucesso" ponto>
+                      {s.qtdProfissionais} profissional{s.qtdProfissionais > 1 ? "is" : ""}
+                    </Selo>
+                  )}
+                </td>
+                <td className="w-10 text-right">
+                  <ChevronRight className="ml-auto size-4 text-muted transition-transform group-hover:translate-x-0.5" aria-hidden />
+                </td>
+              </tr>
             ))}
-          </ul>
+          </Tabela>
         )}
       </Secao>
     </div>

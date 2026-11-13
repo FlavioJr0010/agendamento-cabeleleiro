@@ -34,6 +34,7 @@ export async function listarServicosDisponiveis() {
       descricao: servicos.descricao,
       duracaoMin: servicos.duracaoMin,
       precoCentavos: servicos.precoCentavos,
+      imagem: servicos.imagem,
     })
     .from(servicos)
     .where(

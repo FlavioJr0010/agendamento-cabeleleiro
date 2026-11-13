@@ -1,10 +1,12 @@
 import "server-only";
+import { connection } from "next/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth, type Papel } from "./auth";
 
 /** Sessão atual (ou null) — para uso em Server Components e Server Actions. */
 export async function obterSessao() {
+  await connection();
   return auth.api.getSession({ headers: await headers() });
 }
 
