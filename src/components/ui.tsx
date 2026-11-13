@@ -1,13 +1,12 @@
 import type { ComponentProps, ReactNode } from "react";
 
+/** Cabeçalho + conteúdo das telas de autenticação (o layout cuida da moldura). */
 export function Cartao({ titulo, subtitulo, children }: { titulo: string; subtitulo?: ReactNode; children: ReactNode }) {
   return (
-    <div className="mx-auto w-full max-w-sm px-4 py-10 sm:py-16">
-      <div className="rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
-        <h1 className="text-2xl font-semibold tracking-tight">{titulo}</h1>
-        {subtitulo && <p className="mt-1 text-sm text-muted">{subtitulo}</p>}
-        <div className="mt-6">{children}</div>
-      </div>
+    <div>
+      <h1 className="font-display text-4xl tracking-tight">{titulo}</h1>
+      {subtitulo && <p className="mt-2 text-muted">{subtitulo}</p>}
+      <div className="mt-8">{children}</div>
     </div>
   );
 }
@@ -25,7 +24,7 @@ export function Secao({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-border bg-card p-4 sm:p-6">
+    <section className="rounded-3xl border border-border bg-card p-5 sm:p-7">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
         <div>
           <h2 className="text-lg font-semibold">{titulo}</h2>
@@ -39,7 +38,7 @@ export function Secao({
 }
 
 const estiloCampo =
-  "h-11 w-full rounded-lg border border-border bg-background px-3 text-base outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 disabled:opacity-60";
+  "h-11 w-full rounded-xl border border-border bg-card px-3.5 text-base outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:opacity-60";
 
 export function Campo({
   rotulo,
@@ -84,10 +83,10 @@ export function AreaTexto({
 type VarianteBotao = "primario" | "secundario" | "perigo" | "discreto";
 
 const estilosBotao: Record<VarianteBotao, string> = {
-  primario: "bg-primary text-primary-foreground hover:opacity-90",
-  secundario: "border border-border hover:bg-border/40",
+  primario: "bg-primary text-primary-foreground shadow-sm hover:bg-primary-hover",
+  secundario: "border border-border bg-card hover:bg-surface",
   perigo: "border border-danger/40 text-danger hover:bg-danger/10",
-  discreto: "text-muted hover:bg-border/40 hover:text-foreground",
+  discreto: "text-muted hover:bg-surface hover:text-foreground",
 };
 
 export function Botao({
@@ -96,10 +95,10 @@ export function Botao({
   className = "",
   ...props
 }: ComponentProps<"button"> & { variante?: VarianteBotao; tamanho?: "normal" | "pequeno" }) {
-  const altura = tamanho === "pequeno" ? "h-8 px-3 text-sm" : "h-11 px-4";
+  const altura = tamanho === "pequeno" ? "h-9 px-4 text-sm" : "h-11 px-5";
   return (
     <button
-      className={`inline-flex items-center justify-center gap-1.5 rounded-lg font-medium transition-opacity disabled:opacity-60 ${altura} ${estilosBotao[variante]} ${className}`}
+      className={`inline-flex items-center justify-center gap-1.5 rounded-full font-medium transition-opacity disabled:opacity-60 ${altura} ${estilosBotao[variante]} ${className}`}
       {...props}
     />
   );
@@ -127,7 +126,7 @@ export function Esqueleto({ linhas = 3 }: { linhas?: number }) {
   return (
     <div className="flex flex-col gap-3" aria-busy="true" aria-label="Carregando">
       {Array.from({ length: linhas }, (_, i) => (
-        <div key={i} className="h-12 animate-pulse rounded-lg bg-border/60" />
+        <div key={i} className="h-14 animate-pulse rounded-2xl bg-surface" />
       ))}
     </div>
   );
@@ -137,9 +136,73 @@ export function Avatar({ nome }: { nome: string }) {
   return (
     <span
       aria-hidden
-      className="grid size-11 shrink-0 place-items-center rounded-full bg-primary/15 text-lg font-semibold text-primary"
+      className="font-display grid size-11 shrink-0 place-items-center rounded-full bg-gradient-to-br from-primary-soft to-accent-soft text-lg text-primary"
     >
       {nome.trim().charAt(0).toUpperCase()}
     </span>
+  );
+}
+
+/** Cabeçalho padrão das páginas (título, descrição e ações à direita). */
+export function CabecalhoPagina({
+  titulo,
+  descricao,
+  acoes,
+  voltar,
+}: {
+  titulo: ReactNode;
+  descricao?: ReactNode;
+  acoes?: ReactNode;
+  voltar?: { href: string; rotulo: string };
+}) {
+  return (
+    <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+      <div className="min-w-0">
+        {voltar && (
+          <a href={voltar.href} className="mb-2 inline-flex items-center gap-1 text-sm text-muted hover:text-foreground">
+            ← {voltar.rotulo}
+          </a>
+        )}
+        <h1 className="font-display text-3xl tracking-tight sm:text-4xl">{titulo}</h1>
+        {descricao && <p className="mt-2 max-w-2xl text-muted">{descricao}</p>}
+      </div>
+      {acoes && <div className="flex flex-wrap items-center gap-2">{acoes}</div>}
+    </div>
+  );
+}
+
+/** Estado vazio com ícone, texto e ação. */
+export function Vazio({ icone, titulo, texto, acao }: { icone?: ReactNode; titulo: string; texto?: ReactNode; acao?: ReactNode }) {
+  return (
+    <div className="flex flex-col items-center rounded-3xl border border-dashed border-border px-6 py-12 text-center">
+      {icone && <span className="mb-4 grid size-12 place-items-center rounded-2xl bg-primary-soft text-primary">{icone}</span>}
+      <p className="font-medium">{titulo}</p>
+      {texto && <p className="mt-1 max-w-sm text-sm text-muted">{texto}</p>}
+      {acao && <div className="mt-5">{acao}</div>}
+    </div>
+  );
+}
+
+/** Indicador numérico (KPI). */
+export function Indicador({
+  rotulo,
+  valor,
+  detalhe,
+  icone,
+}: {
+  rotulo: string;
+  valor: ReactNode;
+  detalhe?: ReactNode;
+  icone?: ReactNode;
+}) {
+  return (
+    <div className="rounded-3xl border border-border bg-card p-5">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm text-muted">{rotulo}</p>
+        {icone && <span className="text-muted">{icone}</span>}
+      </div>
+      <p className="mt-2 text-3xl font-semibold tracking-tight tabular-nums">{valor}</p>
+      {detalhe && <p className="mt-1 text-sm text-muted">{detalhe}</p>}
+    </div>
   );
 }

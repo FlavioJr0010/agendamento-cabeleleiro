@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "Criar conta" };
 
 export default function PaginaCadastro({ searchParams }: PageProps<"/cadastro">) {
   return (
-    <Cartao titulo="Criar conta">
+    <Cartao titulo="Criar conta" subtitulo="Leva menos de um minuto.">
       <Suspense fallback={<Esqueleto linhas={5} />}>
         <Conteudo searchParams={searchParams} />
       </Suspense>

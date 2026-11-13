@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "Entrar" };
 
 export default function PaginaEntrar({ searchParams }: PageProps<"/entrar">) {
   return (
-    <Cartao titulo="Entrar">
+    <Cartao titulo="Entrar" subtitulo="Que bom te ver de novo.">
       <Suspense fallback={<Esqueleto linhas={3} />}>
         <Conteudo searchParams={searchParams} />
       </Suspense>

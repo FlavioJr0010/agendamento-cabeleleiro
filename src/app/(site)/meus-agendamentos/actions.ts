@@ -6,13 +6,17 @@ import { agendamentos } from "@/db/schema";
 import { executarAcao, falha, sucesso } from "@/lib/acao";
 import { REGRAS } from "@/lib/regras";
 import { autorizarAcao } from "@/lib/sessao";
+import { registrarMensagemSistema } from "@/db/consultas/mensagens";
+import { avisarListaEspera } from "@/lib/lista-espera";
+import { dataLocal, formatarDataHora } from "@/lib/fuso";
+import { cancelarLembretes } from "@/lib/notificacoes";
 
 export async function cancelarAgendamento(id: string) {
   return executarAcao(async () => {
     const { user } = await autorizarAcao(["cliente", "profissional", "dona"]);
 
     const [ag] = await db
-      .select({ inicio: agendamentos.inicio, status: agendamentos.status })
+      .select({ inicio: agendamentos.inicio, status: agendamentos.status, servicoId: agendamentos.servicoId })
       .from(agendamentos)
       // Só a dona do agendamento pode cancelar por aqui.
       .where(and(eq(agendamentos.id, id), eq(agendamentos.clienteId, user.id)));
@@ -30,8 +34,11 @@ export async function cancelarAgendamento(id: string) {
 
     await db
       .update(agendamentos)
-      .set({ status: "cancelado" })
+      .set({ status: "cancelado", canceladoPor: user.id, motivoCancelamento: "Cancelado pela cliente pelo site" })
       .where(and(eq(agendamentos.id, id), inArray(agendamentos.status, ["pendente", "confirmado"])));
+    await cancelarLembretes(id);
+    await registrarMensagemSistema(id, `A cliente cancelou o agendamento de ${formatarDataHora(ag.inicio)} pelo site.`, "Cancelamento");
+    await avisarListaEspera(ag.servicoId, dataLocal(ag.inicio));
     return sucesso("Agendamento cancelado. O horário foi liberado.");
   });
 }

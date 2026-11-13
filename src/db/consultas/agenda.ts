@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, desc, eq, gt, inArray, lt, notInArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, lt, ne, notInArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   agendamentos,
@@ -104,8 +104,13 @@ export async function buscarDisponibilidade(opcoes: {
   data: string;
   clienteId?: string;
   agora?: Date;
+  /** Ao remarcar: desconsidera o próprio agendamento. */
+  ignorarAgendamentoId?: string;
+  /** A equipe pode agendar sem a antecedência mínima exigida das clientes. */
+  antecedenciaMin?: number;
 }): Promise<{ horarios: Horario[]; duracaoMin: number; intervaloMin: number } | null> {
-  const { servicoId, profissionalId, data, clienteId, agora = new Date() } = opcoes;
+  const { servicoId, profissionalId, data, clienteId, agora = new Date(), ignorarAgendamentoId } = opcoes;
+  const semEle = ignorarAgendamentoId ? ne(agendamentos.id, ignorarAgendamentoId) : undefined;
   const servico = await obterServicoAtivo(servicoId);
   if (!servico) return null;
 
@@ -138,6 +143,7 @@ export async function buscarDisponibilidade(opcoes: {
           notInArray(agendamentos.status, [...STATUS_LIVRES]),
           lt(agendamentos.inicio, fimDia),
           gt(agendamentos.fim, inicioDia),
+          semEle,
         ),
       ),
     db
@@ -154,6 +160,7 @@ export async function buscarDisponibilidade(opcoes: {
               notInArray(agendamentos.status, [...STATUS_LIVRES]),
               lt(agendamentos.inicio, fimDia),
               gt(agendamentos.fim, inicioDia),
+              semEle,
             ),
           )
       : Promise.resolve([]),
@@ -168,7 +175,7 @@ export async function buscarDisponibilidade(opcoes: {
     ocupadosCliente: doCliente,
     agora,
     passoMin: REGRAS.passoMin,
-    antecedenciaMin: REGRAS.antecedenciaMinimaMin,
+    antecedenciaMin: opcoes.antecedenciaMin ?? REGRAS.antecedenciaMinimaMin,
   });
   return { horarios, duracaoMin: servico.duracaoMin, intervaloMin: servico.intervaloMin };
 }

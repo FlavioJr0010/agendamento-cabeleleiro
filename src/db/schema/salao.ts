@@ -12,6 +12,7 @@ import {
   check,
   index,
   integer,
+  numeric,
   pgEnum,
   pgTable,
   primaryKey,
@@ -62,6 +63,10 @@ export const servicos = pgTable(
     intervaloMin: integer().notNull().default(0),
     /** Preço em centavos (evita erros de arredondamento). */
     precoCentavos: integer().notNull(),
+    /** Nome do arquivo em /public/imagens (ex.: "servico-escova.webp"). */
+    imagem: text(),
+    /** Ordem de destaque na página inicial (menor = primeiro); nulo = não destacar. */
+    destaque: integer(),
     ativo: boolean().notNull().default(true),
     ...timestamps,
   },
@@ -81,6 +86,8 @@ export const profissionais = pgTable("profissionais", {
   nome: text().notNull(),
   bio: text(),
   fotoUrl: text(),
+  /** Percentual de comissão sobre serviços (ex.: 40.00). */
+  comissaoPercentual: numeric({ precision: 5, scale: 2, mode: "number" }).notNull().default(40),
   ativo: boolean().notNull().default(true),
   ...timestamps,
 });
@@ -162,6 +169,9 @@ export const agendamentos = pgTable(
     observacoes: text(),
     /** Quem criou (a própria cliente ou alguém da equipe). */
     criadoPor: text().references(() => user.id, { onDelete: "set null" }),
+    /** Quem cancelou e por quê (cliente pelo site ou equipe). */
+    canceladoPor: text().references(() => user.id, { onDelete: "set null" }),
+    motivoCancelamento: text(),
     ...timestamps,
   },
   (t) => [

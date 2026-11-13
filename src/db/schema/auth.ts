@@ -3,7 +3,7 @@
  * Os nomes das propriedades seguem o padrão do Better Auth; no banco as
  * colunas ficam em snake_case (casing configurado no Drizzle).
  */
-import { boolean, index, pgEnum, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, date, index, pgEnum, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 export const papelUsuario = pgEnum("papel_usuario", ["cliente", "profissional", "dona"]);
 
@@ -23,6 +23,8 @@ export const user = pgTable("user", {
   image: text(),
   // Campos extras do salão
   telefone: text(),
+  /** Data de nascimento (opcional) — usada para lembrar aniversariantes. */
+  nascimento: date({ mode: "string" }),
   papel: papelUsuario().notNull().default("cliente"),
   ...timestamps,
 });
