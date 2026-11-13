@@ -3,7 +3,7 @@
 import { CalendarDays, MessagesSquare, UserRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 
 const ABAS = [
   { href: "/meus-agendamentos", rotulo: "Agendamentos", icone: CalendarDays },
@@ -23,7 +23,6 @@ export function AreaCliente({
   acoes?: ReactNode;
   children: ReactNode;
 }) {
-  const caminho = usePathname();
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6 sm:py-12">
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -33,28 +32,42 @@ export function AreaCliente({
         </div>
         {acoes}
       </div>
-      <nav aria-label="Área da cliente" className="-mx-4 mt-6 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-        <ul className="flex min-w-max gap-1 border-b border-border">
-          {ABAS.map(({ href, rotulo, icone: Icone }) => {
-            const ativa = caminho.startsWith(href);
-            return (
-              <li key={href}>
-                <Link
-                  href={href}
-                  aria-current={ativa ? "page" : undefined}
-                  className={`-mb-px flex items-center gap-2 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors ${
-                    ativa ? "border-primary text-primary" : "border-transparent text-muted hover:border-border hover:text-foreground"
-                  }`}
-                >
-                  <Icone className="size-4" aria-hidden />
-                  {rotulo}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
+      <Suspense fallback={<div className="mt-6 h-11 border-b border-border" />}>
+        <AbasCliente />
+      </Suspense>
       <div className="mt-8">{children}</div>
     </div>
+  );
+}
+
+function AbasCliente() {
+  const caminho = usePathname();
+  return (
+    <nav
+      aria-label="Área da cliente"
+      className="-mx-4 mt-6 overflow-x-auto px-4 sm:mx-0 sm:px-0"
+    >
+      <ul className="flex min-w-max gap-1 border-b border-border">
+        {ABAS.map(({ href, rotulo, icone: Icone }) => {
+          const ativa = caminho.startsWith(href);
+          return (
+            <li key={href}>
+              <Link
+                href={href}
+                aria-current={ativa ? "page" : undefined}
+                className={`-mb-px flex items-center gap-2 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors ${
+                  ativa
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted hover:border-border hover:text-foreground"
+                }`}
+              >
+                <Icone className="size-4" aria-hidden />
+                {rotulo}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
   );
 }
