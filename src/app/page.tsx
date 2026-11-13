@@ -13,7 +13,7 @@ export default function Inicio() {
         Seu horário no salão, a poucos toques.
       </h1>
       <p className="max-w-lg text-lg text-muted">
-        Escolha o serviço, a profissional e o melhor horário. Tire dúvidas direto com o salão.
+        Escolha o serviço, a profissional e o melhor horário — e acompanhe seus agendamentos.
       </p>
       <div className="flex min-h-12 flex-wrap gap-3">
         <Link href="/agendar" className={primario}>

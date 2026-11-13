@@ -129,18 +129,28 @@ async function Fluxo({ searchParams }: { searchParams: PageProps<"/agendar">["se
   );
   const dias = Array.from({ length: REGRAS.janelaDias }, (_, i) => somarDias(hoje, i));
   const diasDisponiveis = dias.filter((d) => diasQueAtende.has(diaDaSemana(d)));
-  const data =
-    pedido.data && dataValida(pedido.data) && diasDisponiveis.includes(pedido.data) ? pedido.data : diasDisponiveis[0];
-
   const sessao = await obterSessao();
-  const disp = data
-    ? await buscarDisponibilidade({
-        servicoId: servico.id,
-        profissionalId: qualquer ? null : profissional!.id,
-        data,
-        clienteId: sessao?.user.id,
-      })
-    : null;
+  const consultar = (d: string) =>
+    buscarDisponibilidade({
+      servicoId: servico.id,
+      profissionalId: qualquer ? null : profissional!.id,
+      data: d,
+      clienteId: sessao?.user.id,
+    });
+
+  let data: string | undefined;
+  let disp: Awaited<ReturnType<typeof consultar>> = null;
+  if (pedido.data && dataValida(pedido.data) && diasDisponiveis.includes(pedido.data)) {
+    data = pedido.data;
+    disp = await consultar(data);
+  } else {
+    // Sem data escolhida: abre no primeiro dia que ainda tem horário livre.
+    for (const d of diasDisponiveis.slice(0, 14)) {
+      disp = await consultar(d);
+      data = d;
+      if (disp?.horarios.length) break;
+    }
+  }
   const horarios = disp?.horarios ?? [];
   const escolhido = horarios.find((h) => h.inicio.toISOString() === pedido.horario);
 
@@ -236,7 +246,7 @@ async function Fluxo({ searchParams }: { searchParams: PageProps<"/agendar">["se
         <p className="text-muted">Sem dias de atendimento nas próximas semanas.</p>
       ) : (
         <>
-          <ul className="-mx-4 flex snap-x gap-2 overflow-x-auto px-4 pb-2" aria-label="Dias">
+          <ul className="-mx-4 flex snap-x gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0" aria-label="Dias">
             {dias.map((d) => {
               const { semana, dia, mes } = partesDia(d);
               const atende = diasQueAtende.has(diaDaSemana(d));

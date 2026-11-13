@@ -32,8 +32,10 @@ export async function listarProfissionais() {
       nome: profissionais.nome,
       ativo: profissionais.ativo,
       emailLogin: user.email,
-      qtdServicos: sql<number>`(select count(*) from ${profissionalServicos} where ${profissionalServicos.profissionalId} = ${profissionais.id})::int`,
-      qtdFaixas: sql<number>`(select count(*) from ${horariosTrabalho} where ${horariosTrabalho.profissionalId} = ${profissionais.id})::int`,
+      // Atenção: em subselects DENTRO dos campos do select, o Drizzle não qualifica as
+      // colunas com o nome da tabela — por isso os nomes são escritos explicitamente.
+      qtdServicos: sql<number>`(select count(*) from profissional_servicos ps where ps.profissional_id = "profissionais"."id")::int`,
+      qtdFaixas: sql<number>`(select count(*) from horarios_trabalho ht where ht.profissional_id = "profissionais"."id")::int`,
     })
     .from(profissionais)
     .leftJoin(user, eq(user.id, profissionais.usuarioId))

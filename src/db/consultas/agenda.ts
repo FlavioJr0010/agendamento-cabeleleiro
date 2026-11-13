@@ -60,8 +60,9 @@ export async function listarProfissionaisDoServico(servicoId: string) {
       id: profissionais.id,
       nome: profissionais.nome,
       bio: profissionais.bio,
-      dias: sql<number[]>`array(select distinct ${horariosTrabalho.diaSemana} from ${horariosTrabalho}
-                                where ${horariosTrabalho.profissionalId} = ${profissionais.id})`,
+      // Subselect nos campos: nomes explícitos (o Drizzle não qualifica colunas aqui).
+      dias: sql<number[]>`array(select distinct ht.dia_semana from horarios_trabalho ht
+                                where ht.profissional_id = "profissionais"."id")`,
     })
     .from(profissionais)
     .where(profissionalAtende(servicoId))
@@ -77,10 +78,10 @@ export async function listarEquipe() {
       nome: profissionais.nome,
       bio: profissionais.bio,
       servicos: sql<string[]>`array(
-        select ${servicos.nome} from ${profissionalServicos}
-        join ${servicos} on ${servicos.id} = ${profissionalServicos.servicoId}
-        where ${profissionalServicos.profissionalId} = ${profissionais.id} and ${servicos.ativo}
-        order by ${servicos.nome})`,
+        select s.nome from profissional_servicos ps
+        join servicos s on s.id = ps.servico_id
+        where ps.profissional_id = "profissionais"."id" and s.ativo
+        order by s.nome)`,
     })
     .from(profissionais)
     .where(
@@ -187,8 +188,8 @@ export async function contarAgendamentosFuturos(clienteId: string, agora = new D
   return r.total;
 }
 
-export async function listarAgendamentosDaCliente(clienteId: string) {
-  return db
+export async function listarAgendamentosDaCliente(clienteId: string, agora = new Date()) {
+  const todos = await db
     .select({
       id: agendamentos.id,
       inicio: agendamentos.inicio,
@@ -206,4 +207,18 @@ export async function listarAgendamentosDaCliente(clienteId: string) {
     .innerJoin(profissionais, eq(profissionais.id, agendamentos.profissionalId))
     .where(eq(agendamentos.clienteId, clienteId))
     .orderBy(desc(agendamentos.inicio));
+
+  const ms = agora.getTime();
+  const ativo = (s: string) => s === "pendente" || s === "confirmado" || s === "em_atendimento";
+  const prazo = REGRAS.prazoCancelamentoHoras * 3_600_000;
+  // "Próximos" inclui atendimentos que começaram há pouco (ainda em andamento).
+  const proximos = todos
+    .filter((a) => ativo(a.status) && a.inicio.getTime() >= ms - 3 * 3_600_000)
+    .reverse()
+    .map((a) => ({
+      ...a,
+      podeCancelar: (a.status === "pendente" || a.status === "confirmado") && a.inicio.getTime() - ms > prazo,
+    }));
+  const historico = todos.filter((a) => !proximos.some((p) => p.id === a.id));
+  return { proximos, historico };
 }

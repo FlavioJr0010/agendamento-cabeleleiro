@@ -6,7 +6,6 @@ import { Botao, Esqueleto, Selo } from "@/components/ui";
 import { listarAgendamentosDaCliente } from "@/db/consultas/agenda";
 import { formatarPreco } from "@/lib/formato";
 import { formatarDataHora } from "@/lib/fuso";
-import { REGRAS } from "@/lib/regras";
 import { exigirSessao } from "@/lib/sessao";
 import { cancelarAgendamento } from "./actions";
 
@@ -43,12 +42,7 @@ export default function PaginaMeusAgendamentos({ searchParams }: PageProps<"/meu
 async function Lista({ searchParams }: { searchParams: PageProps<"/meus-agendamentos">["searchParams"] }) {
   const { user } = await exigirSessao();
   const { novo } = await searchParams;
-  const todos = await listarAgendamentosDaCliente(user.id);
-  const agora = Date.now();
-
-  const ativos = (s: string) => s === "pendente" || s === "confirmado" || s === "em_atendimento";
-  const proximos = todos.filter((a) => ativos(a.status) && a.inicio.getTime() >= agora - 3 * 3_600_000).reverse();
-  const historico = todos.filter((a) => !proximos.includes(a));
+  const { proximos, historico } = await listarAgendamentosDaCliente(user.id);
 
   return (
     <div className="mt-6 flex flex-col gap-8">
@@ -70,9 +64,6 @@ async function Lista({ searchParams }: { searchParams: PageProps<"/meus-agendame
         ) : (
           <ul className="flex flex-col gap-3">
             {proximos.map((a) => {
-              const podeCancelar =
-                (a.status === "pendente" || a.status === "confirmado") &&
-                a.inicio.getTime() - agora > REGRAS.prazoCancelamentoHoras * 3_600_000;
               return (
                 <li key={a.id} className="rounded-2xl border border-border bg-card p-4 sm:p-5">
                   <div className="flex flex-wrap items-start justify-between gap-2">
@@ -86,7 +77,7 @@ async function Lista({ searchParams }: { searchParams: PageProps<"/meus-agendame
                   <p className="text-sm text-muted">{formatarPreco(a.precoCentavos)} · pagamento no salão</p>
                   {a.observacoes && <p className="mt-2 text-sm italic text-muted">“{a.observacoes}”</p>}
                   <div className="mt-4 flex flex-wrap items-center gap-3">
-                    {podeCancelar ? (
+                    {a.podeCancelar ? (
                       <FormAcao
                         action={cancelarAgendamento.bind(null, a.id)}
                         confirmar={`Cancelar ${a.servico} — ${formatarDataHora(a.inicio)}?`}

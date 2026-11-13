@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: { default: "Salão – Agendamento", template: "%s · Salão" },
-  description: "Agende seu horário, converse com o salão e acompanhe seus atendimentos.",
+  description: "Agende seu horário no salão e acompanhe seus atendimentos.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

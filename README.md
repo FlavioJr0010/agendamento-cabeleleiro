@@ -44,6 +44,7 @@ Conta da dona criada pelo seed (definida no `.env`): `dona@salao.local` / `troca
 | `npm run dev` | Servidor de desenvolvimento |
 | `npm run build` | Build de produção |
 | `npm run lint` / `npm run typecheck` | ESLint / checagem de tipos |
+| `npm test` | Testes unitários (Vitest) |
 | `npm run db:up` / `db:down` | Sobe / para o PostgreSQL no Docker |
 | `npm run db:generate` | Gera migration a partir de mudanças em `src/db/schema/` |
 | `npm run db:migrate` | Aplica as migrations pendentes |
@@ -55,8 +56,11 @@ Conta da dona criada pelo seed (definida no `.env`): `dona@salao.local` / `troca
 ```text
 src/
   app/
-    (auth)/entrar, (auth)/cadastro   telas de login e cadastro
-    conta/                           área logada (minha conta)
+    (auth)/entrar, (auth)/cadastro   login e cadastro (aceitam ?voltar=/caminho)
+    servicos/                        página pública: serviços, preços e equipe
+    agendar/                         fluxo de agendamento em 4 etapas + actions.ts
+    meus-agendamentos/               próximos horários, histórico e cancelamento
+    conta/                           minha conta
     painel/                          painel da dona (só papel "dona")
       servicos/                      cadastro/edição de serviços + actions.ts
       profissionais/                 equipe, serviços, expediente, acesso + actions.ts
@@ -73,6 +77,9 @@ src/
     sessao.ts                        obterSessao(), exigirSessao(papeis), autorizarAcao(papeis)
     acao.ts                          executarAcao(): erros amigáveis + refresh da tela
     formato.ts                       preço (R$ ⇄ centavos), duração, dias da semana
+    regras.ts                        regras de agendamento (passo, antecedência, limites…)
+    fuso.ts                          horário do salão ⇄ UTC
+    disponibilidade.ts               cálculo de horários livres (função pura + testes)
 drizzle/                             migrations SQL
 scripts/seed.ts                      dados iniciais
 ```
@@ -86,11 +93,25 @@ scripts/seed.ts                      dados iniciais
 
 (Ver `drizzle/0001_regras_agendamento.sql`.)
 
+## Regras de agendamento (`src/lib/regras.ts`)
+
+| Regra | Valor atual |
+|---|---|
+| Horários oferecidos a cada | 15 min |
+| Antecedência mínima | 60 min |
+| Agenda aberta para os próximos | 30 dias |
+| Agendamentos futuros por cliente | máx. 3 |
+| Cancelamento pelo site | até 2h antes |
+
+Novos agendamentos entram como **pendente** (aguardando confirmação do salão). Em "qualquer profissional", o sistema escolhe quem fica com o horário colado a outro atendimento (menos buracos na agenda) e, em empate, quem tem menos atendimentos no dia.
+
 ## Convenções
 
 - **Permissão em dois lugares:** páginas usam `exigirSessao(["dona"])` e **toda** Server Action chama `autorizarAcao([...])`, pois actions podem ser chamadas diretamente, sem passar pela página.
 - **Cache Components (Next 16):** tudo que lê sessão, `params` ou banco fica dentro de `<Suspense>`. Depois de alterar dados, `executarAcao()` chama `refresh()`.
 - **Dinheiro em centavos** (`precoCentavos`), horários em UTC no banco.
+- **Subselects nos campos do `select` do Drizzle:** escreva os nomes de tabela explicitamente (`"profissionais"."id"`) — nesse lugar o Drizzle não qualifica as colunas e a comparação pode cair na tabela errada.
+- **A disponibilidade é sempre recalculada no servidor** ao confirmar; o horário enviado pela tela nunca é aceito sem checagem.
 - Nada é apagado de verdade em serviços/profissionais: usa-se `ativo = false`, para preservar o histórico.
 
 ### Comandos úteis do banco

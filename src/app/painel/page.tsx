@@ -18,10 +18,19 @@ export default function PaginaPainel() {
 async function Resumo() {
   const { user } = await exigirSessao(["dona"]);
   const r = await resumoPainel();
-  const pendencias = [
-    ...r.semServicos.map((p) => ({ ...p, texto: "ainda não tem serviços vinculados" })),
-    ...r.semExpediente.map((p) => ({ ...p, texto: "ainda não tem expediente cadastrado" })),
-  ];
+  // Uma linha por profissional, com todas as pendências dela.
+  const porProfissional = new Map<string, { id: string; nome: string; faltas: string[] }>();
+  for (const [lista, falta] of [
+    [r.semServicos, "serviços"],
+    [r.semExpediente, "expediente"],
+  ] as const) {
+    for (const p of lista) {
+      const item = porProfissional.get(p.id) ?? { id: p.id, nome: p.nome, faltas: [] };
+      item.faltas.push(falta);
+      porProfissional.set(p.id, item);
+    }
+  }
+  const pendencias = [...porProfissional.values()];
 
   return (
     <div className="flex flex-col gap-6">
@@ -45,11 +54,11 @@ async function Resumo() {
           </p>
           <ul className="mt-3 flex flex-col gap-1 text-sm">
             {pendencias.map((p) => (
-              <li key={`${p.id}-${p.texto}`}>
+              <li key={p.id}>
                 <Link href={`/painel/profissionais/${p.id}`} className="font-medium underline underline-offset-4">
                   {p.nome}
                 </Link>{" "}
-                {p.texto}
+                — falta cadastrar {p.faltas.join(" e ")}
               </li>
             ))}
           </ul>
